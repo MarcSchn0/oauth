@@ -1,24 +1,29 @@
-import {LoaderFunction, LoaderFunctionArgs} from "@remix-run/node";
+import {LoaderFunction, LoaderFunctionArgs, redirect} from "@remix-run/node";
 import {getUserInfo} from "~/auth/github";
+import {commitSession, getSession} from "~/session.server";
 
-
-export const loader: LoaderFunction = async (args: LoaderFunctionArgs) => {
-    const searchParams = new URLSearchParams(args.request.url.split("?")[1]);
-
+export const loader: LoaderFunction = async ({ request }) => {
+    const searchParams = new URLSearchParams(request.url.split("?")[1]);
     const code = searchParams.get("code");
 
-    if(!code) {
-        return Response.json({ error: "github-auth-failed-no-code"});
+    if (!code) {
+        return Response.json({ error: "github-auth-failed-no-code" });
     }
 
-    const accessTokenResponse = await getAccessToken(code) as string;
-
+    const accessTokenResponse = await getAccessToken(code) as any;
     const accessToken = accessTokenResponse.access_token;
 
     const userInfo = await getUserInfo(accessToken);
 
-    return Response.json(userInfo);
-}
+    const session = await getSession();
+    session.set("user", userInfo);
+
+    return redirect("/profile", {
+        headers: {
+            "Set-Cookie": await commitSession(session),
+        },
+    });
+};
 
 export const getAccessToken = async (code: string): Promise<string> => {
     const url = "https://github.com/login/oauth/access_token";
