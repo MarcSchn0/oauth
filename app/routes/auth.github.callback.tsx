@@ -27,8 +27,8 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const getAccessToken = async (code: string): Promise<string> => {
     const url = "https://github.com/login/oauth/access_token";
-    const client_id = "Ov23linuaeDKpIEdVv3i";
-    const client_secret = "564527265109439b2f57ff0f866055ce4850fac5";
+    const client_id = process.env.GITHUB_CLIENT_ID!;
+    const client_secret = process.env.GITHUB_CLIENT_SECRET!;
     const params = new URLSearchParams({
         client_id,
         client_secret,
